@@ -22,6 +22,8 @@ public class MyTestService extends HomeService {
     private Mp3Player mp3Player;
     private LcdDisplayManager lcdDisplayManager;
 
+    private GPIOTask ButtonManager;
+
     private OcServer ocServer;
     private OcResourceBrightness ocBrightness;
     private OcResourceMp3Player ocMp3Player;
@@ -41,6 +43,10 @@ public class MyTestService extends HomeService {
         lcdDisplayManager = new LcdDisplayManager(mp3Player);
         new Thread(lcdDisplayManager).start();
         mp3Player.subscribeStateChangeNotification(lcdDisplayManager);
+
+        ButtonManager = new GPIOTask();
+        new Thread(ButtonManager).start();
+        ButtonManager.subscribeStateChangeNotification(mp3Player);
 
         ocServer = new OcServer(this);
         ocBrightness = new OcResourceBrightness(
@@ -63,9 +69,14 @@ public class MyTestService extends HomeService {
 
     @Override
     public void onDestroy() {
+        if(ButtonManager != null) {
+            ButtonManager.closePorts();
+        }
+
         if (mRunnerThread != null) {
             mRunnerThread.quitSafely();
         }
+
         Log.d(TAG, "Headless service destroyed");
     }
 

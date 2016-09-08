@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Mp3Player implements Runnable,
-        MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener {
+        MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,GPIOTask.OnButtonStateChangeListener {
     private static final String TAG = Mp3Player.class.getSimpleName();
 
     private Context mContext;
@@ -19,6 +19,45 @@ public class Mp3Player implements Runnable,
     private int currentSongIndex = 0;
     private AudioManager am;
     private MediaPlayer mp;
+    private  int volumeStep = 3;
+    @Override
+    public void onButtonStateChanged(GPIOTask.ButtonsState state) {
+        switch (state){
+            case Play:
+                Play();
+                break;
+            case Stop:
+                Stop();
+                break;
+
+            case Next:
+                Next();
+                break;
+            case Back:
+                Back();
+                break;
+
+            case Volup:
+                if(isMuted()){
+                    unmute();
+                }
+                int volM = (getCurrentVolume() + volumeStep);
+                if (volM < getMaxVolume()) {
+                    setVolume(volM);
+                }
+                break;
+            case VolDown:
+                int volL = (getCurrentVolume() - volumeStep);
+                if (volL > 0 ) {
+                    setVolume(volL);
+                }else{
+                    mute();
+                }
+                break;
+
+        }
+    }
+
     public enum MediaState {
         Idle, Playing, Paused
     }
@@ -84,6 +123,25 @@ public class Mp3Player implements Runnable,
             mp.stop();
             setMediaState(MediaState.Idle);
         }
+    }
+
+
+    public void Next() {
+        Stop();
+        currentSongIndex++;
+        if (currentSongIndex > sm.size()){
+            currentSongIndex = 0;
+        }
+        Play();
+    }
+
+    public void Back() {
+        Stop();
+        currentSongIndex--;
+        if (currentSongIndex < 0 ) {
+            currentSongIndex = sm.size();
+        }
+        Play();
     }
 
     public boolean isMuted() {
