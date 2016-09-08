@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Mp3Player implements Runnable,
-        MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,GPIOTask.OnButtonStateChangeListener {
+        MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener,GPIOManager.OnButtonStateChangeListener {
     private static final String TAG = Mp3Player.class.getSimpleName();
 
     private Context mContext;
@@ -21,7 +21,7 @@ public class Mp3Player implements Runnable,
     private MediaPlayer mp;
     private  int volumeStep = 3;
     @Override
-    public void onButtonStateChanged(GPIOTask.ButtonsState state) {
+    public void onButtonStateChanged(GPIOManager.ButtonsState state) {
         switch (state){
             case Play:
                 Play();

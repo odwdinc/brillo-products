@@ -10,18 +10,18 @@ import android.util.Log;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.intel.otc.brillo.examples.GPIOTask.ButtonsState.Back;
-import static com.intel.otc.brillo.examples.GPIOTask.ButtonsState.Next;
-import static com.intel.otc.brillo.examples.GPIOTask.ButtonsState.Play;
-import static com.intel.otc.brillo.examples.GPIOTask.ButtonsState.Stop;
-import static com.intel.otc.brillo.examples.GPIOTask.ButtonsState.VolDown;
-import static com.intel.otc.brillo.examples.GPIOTask.ButtonsState.Volup;
+import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Back;
+import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Next;
+import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Play;
+import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Stop;
+import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.VolDown;
+import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Volup;
 
 /**
  * Created by Ap on 9/8/2016.
  */
-public class GPIOTask implements Runnable {
-    private static final String TAG = "GPIOTask";
+public class GPIOManager implements Runnable {
+    private static final String TAG = "GPIOManager";
 
     private PeripheralManagerService mService;
 
@@ -68,9 +68,9 @@ public class GPIOTask implements Runnable {
     }
     private ButtonsState mState;
 
-    private List<OnButtonStateChangeListener> mStateChangeListeners = new LinkedList<>();
+    private List<OnButtonStateChangeListener> bStateChangeListeners = new LinkedList<>();
 
-    public GPIOTask() {
+    public GPIOManager() {
         mService = new PeripheralManagerService();
 
         try {
@@ -123,26 +123,26 @@ public class GPIOTask implements Runnable {
         public boolean onInterruptEvent(String name) {
             try {
                 if(Play_gpio.getValue()) {
-                    setMediaState(Play);
+                    setButtonState(Play);
                 }
                 if(Stop_gpio.getValue()) {
-                    setMediaState(Stop);
+                    setButtonState(Stop);
                 }
 
 
                 if(Next_gpio.getValue()) {
-                    setMediaState(Next);
+                    setButtonState(Next);
                 }
                 if(Back_gpio.getValue()) {
-                    setMediaState(Back);
+                    setButtonState(Back);
                 }
 
 
                 if(Volup_gpio.getValue()) {
-                    setMediaState(Volup);
+                    setButtonState(Volup);
                 }
                 if(VolDown_gpio.getValue()) {
-                    setMediaState(VolDown);
+                    setButtonState(VolDown);
                 }
             } catch (RemoteException | ErrnoException e) {
                 Log.e(TAG, "Error on PeripheralIO API", e);
@@ -159,7 +159,7 @@ public class GPIOTask implements Runnable {
 
     @Override
     public void run() {
-        Log.i(TAG, "Executing task GPIOTask");
+        Log.i(TAG, "Executing task GPIOManager");
         while (runing){
 
         }
@@ -177,17 +177,17 @@ public class GPIOTask implements Runnable {
         return gpios;
     }
 
-    private synchronized void setMediaState(ButtonsState newState) {
+    private synchronized void setButtonState(ButtonsState newState) {
         mState = newState;
-        for (OnButtonStateChangeListener listener : mStateChangeListeners)
+        for (OnButtonStateChangeListener listener : bStateChangeListeners)
             listener.onButtonStateChanged(newState);
     }
 
     public void subscribeStateChangeNotification(OnButtonStateChangeListener listener) {
-        mStateChangeListeners.add(listener);
+        bStateChangeListeners.add(listener);
     }
 
     public void unsubscribeStateChangeNotification(OnButtonStateChangeListener listener) {
-        mStateChangeListeners.remove(listener);
+        bStateChangeListeners.remove(listener);
     }
 }

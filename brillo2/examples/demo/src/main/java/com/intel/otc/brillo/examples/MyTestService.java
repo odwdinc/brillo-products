@@ -22,7 +22,7 @@ public class MyTestService extends HomeService {
     private Mp3Player mp3Player;
     private LcdDisplayManager lcdDisplayManager;
 
-    private GPIOTask ButtonManager;
+    private GPIOManager ButtonManager;
 
     private OcServer ocServer;
     private OcResourceBrightness ocBrightness;
@@ -44,7 +44,7 @@ public class MyTestService extends HomeService {
         new Thread(lcdDisplayManager).start();
         mp3Player.subscribeStateChangeNotification(lcdDisplayManager);
 
-        ButtonManager = new GPIOTask();
+        ButtonManager = new GPIOManager();
         new Thread(ButtonManager).start();
         ButtonManager.subscribeStateChangeNotification(mp3Player);
 
