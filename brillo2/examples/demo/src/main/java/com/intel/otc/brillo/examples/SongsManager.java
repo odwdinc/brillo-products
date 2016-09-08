@@ -17,13 +17,19 @@ public class SongsManager {
     final String MEDIA_PATH = new String("/sdcard/Music/");
 
     public SongsManager() {
-        getPlayList();
+        addLocalFiles();
     }
 
+
+
+
+    public ArrayList<HashMap<String, String>> getPlayList(){
+        return songsList;
+    }
     /*
      * Function to read all mp3 files from sdcard and store the details in ArrayList
      */
-    public ArrayList<HashMap<String, String>> getPlayList() {
+    private void addLocalFiles() {
         File home = new File(MEDIA_PATH);
         File[] mp3_files = home.listFiles(new Mp3FileFilter());
 
@@ -33,16 +39,29 @@ public class SongsManager {
                 HashMap<String, String> song = new HashMap<String, String>();
                 song.put("songTitle", file.getName().substring(0, (file.getName().length() - 4)));
                 song.put("songPath", file.getPath());
-
                 // Adding each song to SongList
                 songsList.add(song);
                 Log.d(TAG, "Found " + file.getPath());
             }
             Log.i(TAG, "Total " + songsList.size() + " songs found.");
         }
-        // return songs list array
-        return songsList;
     }
+
+
+
+    /*
+ * Function add network mp3 files and store the details in ArrayList
+ */
+    public void addNetworkFile(String Title,String URI) {
+        HashMap<String, String> song = new HashMap<String, String>();
+        song.put("songTitle", Title);
+        song.put("songPath", URI);
+        song.put("isurl", "true");
+        // Adding song to SongList
+        songsList.add(song);
+        Log.i(TAG, "Total " + songsList.size() + " songs found.");
+    }
+
 
     /*
      * Class to filter files which are having .mp3 extension
@@ -59,6 +78,10 @@ public class SongsManager {
 
     public String getSongPath(int index) {
         return (0 <= index && index < songsList.size())? songsList.get(index).get("songPath") : null;
+    }
+
+    public Boolean isIndexUrl(int index) {
+        return (0 <= index && index < songsList.size())? songsList.get(index).containsKey("isurl") : false;
     }
 
     public int size() {

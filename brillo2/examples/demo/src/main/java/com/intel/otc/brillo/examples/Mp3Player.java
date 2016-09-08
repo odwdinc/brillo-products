@@ -3,6 +3,9 @@ package com.intel.otc.brillo.examples;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.audiofx.Visualizer;
+import android.net.wifi.WifiManager;
+import android.os.PowerManager;
 import android.os.Process;
 import android.util.Log;
 
@@ -20,6 +23,11 @@ public class Mp3Player implements Runnable,
     private AudioManager am;
     private MediaPlayer mp;
     private  int volumeStep = 3;
+    WifiManager.WifiLock wifiLock;
+    private Visualizer mVisualizer;
+    private byte[] mBytes;
+    private byte[] mFFTBytes;
+
     @Override
     public void onButtonStateChanged(GPIOManager.ButtonsState state) {
         switch (state){
@@ -67,7 +75,9 @@ public class Mp3Player implements Runnable,
 
     public interface OnMediaStateChangeListener {
         void onMediaStateChanged(MediaState state);
+        void onVisualizerChanged(byte[] mBytes, boolean isFFT);
     }
+
 
     public Mp3Player(Context context) {
         mContext = context;
@@ -85,7 +95,47 @@ public class Mp3Player implements Runnable,
         mp = new MediaPlayer();
         mp.setOnCompletionListener(this);
         mp.setOnPreparedListener(this);
+        mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+        wifiLock = ((WifiManager) mContext.getSystemService(Context.WIFI_SERVICE))
+                .createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
+
+        mVisualizer = new Visualizer(mp.getAudioSessionId());
+        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
+        Visualizer.OnDataCaptureListener captureListener = new Visualizer.OnDataCaptureListener()
+        {
+            @Override
+            public void onWaveFormDataCapture(Visualizer visualizer, byte[] bytes,
+                                              int samplingRate)
+            {
+                updateVisualizer(bytes);
+            }
+
+            @Override
+            public void onFftDataCapture(Visualizer visualizer, byte[] bytes,
+                                         int samplingRate)
+            {
+                updateVisualizerFFT(bytes);
+            }
+
+        };
+        mVisualizer.setDataCaptureListener(captureListener,
+                Visualizer.getMaxCaptureRate() / 2, true, true);
+
+
         setMediaState(MediaState.Idle);
+    }
+
+
+    private synchronized void updateVisualizer(byte[] bytes) {
+        mBytes = bytes;
+        for (OnMediaStateChangeListener listener : mStateChangeListeners)
+            listener.onVisualizerChanged(bytes, false);
+    }
+
+    private synchronized void updateVisualizerFFT(byte[] bytes) {
+        mFFTBytes = bytes;
+        for (OnMediaStateChangeListener listener : mStateChangeListeners)
+            listener.onVisualizerChanged(bytes, true);
     }
 
     @Override
@@ -94,12 +144,17 @@ public class Mp3Player implements Runnable,
         if (++currentSongIndex < sm.size())
             Play();
         else currentSongIndex = 0;
+        // Disable Visualizer
+        mVisualizer.setEnabled(false);
     }
 
     @Override
     public void onPrepared(MediaPlayer player) {
         mp.start();
         setMediaState(MediaState.Playing);
+        // Enabled Visualizer
+
+        mVisualizer.setEnabled(true);
     }
 
     public void Play() {
@@ -110,8 +165,10 @@ public class Mp3Player implements Runnable,
             case Playing:
                 mp.pause();
                 setMediaState(MediaState.Paused);
+                wifiLock.release();
                 break;
             case Paused:
+                wifiLock.acquire();
                 mp.start();
                 setMediaState(MediaState.Playing);
                 break;
@@ -120,6 +177,7 @@ public class Mp3Player implements Runnable,
 
     public void Stop() {
         if (mState != MediaState.Idle) {
+            wifiLock.release();
             mp.stop();
             setMediaState(MediaState.Idle);
         }
@@ -182,6 +240,7 @@ public class Mp3Player implements Runnable,
             listener.onMediaStateChanged(newState);
     }
 
+
     public void subscribeStateChangeNotification(OnMediaStateChangeListener listener) {
         mStateChangeListeners.add(listener);
     }
@@ -200,8 +259,12 @@ public class Mp3Player implements Runnable,
 
     private void playSong(int index) {
         try {
+            wifiLock.acquire();
             Log.d(TAG, "Playing " + sm.getSongTitle(index));
             mp.reset();
+            if(sm.isIndexUrl(index)) {
+                mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            }
             mp.setDataSource(sm.getSongPath(index));
             mp.prepareAsync();
         } catch (IOException e) {

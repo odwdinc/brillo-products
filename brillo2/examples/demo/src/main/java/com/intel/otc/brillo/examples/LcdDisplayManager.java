@@ -4,6 +4,8 @@ import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
 
+import static android.os.SystemClock.sleep;
+
 public class LcdDisplayManager implements Runnable,
         Mp3Player.OnMediaStateChangeListener,
         OcResourceBrightness.OnBrightnessChangeListener
@@ -15,10 +17,28 @@ public class LcdDisplayManager implements Runnable,
     private int timeEscapedInMsec = 0;
     private LcdRgbBacklight lcd;
     private int LCDTrackPos =0;
+    private byte heart[] = {0x0, 0xa, 0x1f, 0x1f, 0xe, 0x4, 0x0, 0x0};
+
+    private byte Step0[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1F};
+    private byte Step1[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1F, 0x1F};
+    private byte Step2[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x1F, 0x1F, 0x1F};
+    private byte Step3[] = {0x0, 0x0, 0x0, 0x0, 0x1F, 0x1F, 0x1F, 0x1F};
+    private byte Step4[] = {0x0, 0x0, 0x0, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
+    private byte Step5[] = {0x0, 0x0, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
+    private byte Step6[] = {0x0, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
+    private byte Step7[] = {0x0, 0x1F, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
     public LcdDisplayManager(Mp3Player player) {
         mp3Player = player;
         lcd = new LcdRgbBacklight();
+        lcd.createChar(0,heart);
+        lcd.createChar(1,Step1);
+        lcd.createChar(2,Step2);
+        lcd.createChar(3,Step3);
+        lcd.createChar(4,Step4);
+        lcd.createChar(5,Step5);
+        lcd.createChar(6,Step6);
+        lcd.createChar(7,Step7);
     }
 
     @Override
@@ -26,6 +46,15 @@ public class LcdDisplayManager implements Runnable,
         Log.d(TAG, "LCD display manager started");
 
         lcd.begin(16, 2, LcdRgbBacklight.LCD_5x10DOTS);
+        lcd.write("Hello Traveler");
+        lcd.setCursor(0, 1);
+        lcd.write(" Intel ");
+        lcd.write((byte) 0);
+        lcd.write(" Brillo!");
+        sleep(2000);
+
+        lcd.createChar(0,Step0);
+
         boolean showTimeEscaped = false;
         while (true)
             try {
@@ -93,6 +122,23 @@ public class LcdDisplayManager implements Runnable,
         }
     }
 
+    int mDivisions =16;
+
+    @Override
+    public void onVisualizerChanged(byte[] mBytes, boolean isFFT) {
+        if (isFFT) {
+            for (int i = 0; i < mBytes.length / mDivisions; i++) {
+                byte rfk = mBytes[mDivisions * i];
+                byte ifk = mBytes[mDivisions * i + 1];
+                float magnitude = (rfk * rfk + ifk * ifk);
+                int dbValue = (int) (10 * Math.log10(magnitude));
+                lcd.setCursor(i, 1);
+                lcd.write((byte) (dbValue * 2 - 10));
+            }
+        }
+
+    }
+
     @Override
     public void onBrightnessChanged(int brightness) {
         if (0 <= brightness && brightness <= 100) {
@@ -110,4 +156,5 @@ public class LcdDisplayManager implements Runnable,
         n %= 100;
         return ((n < 10)? "0" : "") + n;
     }
+
 }

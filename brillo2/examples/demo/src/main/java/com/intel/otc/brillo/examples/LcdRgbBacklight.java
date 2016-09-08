@@ -130,6 +130,16 @@ public class LcdRgbBacklight {
         }
     }
 
+    public synchronized void write(byte ch) {
+        try {
+            I2cDevice dev = mService.openI2cDevice(I2C, LCD_ADDRESS);
+                dev.writeRegByte(0x40, ch);
+            dev.close();
+        } catch (RemoteException | ErrnoException e) {
+            Log.e(TAG, "Exception on writing Char '" + ch + "' to LCD");
+        }
+    }
+
     public synchronized void clear() {
         command(LCD_CLEARDISPLAY);        // clear display, set cursor position to zero
         delayMicroseconds(2000);          // this command takes a long time!
@@ -201,6 +211,16 @@ public class LcdRgbBacklight {
     public synchronized void noAutoscroll() {
         _displaymode &= ~LCD_ENTRYSHIFTINCREMENT;
         command(LCD_ENTRYMODESET | _displaymode);
+    }
+
+
+    public synchronized void createChar(int location, byte charmap[]) {
+        byte lo = (byte) location;
+        lo &= 0x7; // we only have 8 locations 0-7
+        command(LCD_SETCGRAMADDR | (lo << 3));
+        for (int i=0; i<8; i++) {
+            write(charmap[i]);
+        }
     }
 
     private void command(int value) {
