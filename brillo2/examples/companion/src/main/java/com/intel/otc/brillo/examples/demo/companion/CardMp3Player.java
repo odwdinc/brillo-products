@@ -25,7 +25,7 @@ public class CardMp3Player extends CardOcResource {
     private static final String KEY_STATE = "state";
     private static final String KEY_TITLE = "title";
     private enum PlayerState {
-        Idle, Playing, Paused
+        Idle, Playing, Paused,Next,Back
     }
 
     private List<String> mValidStates = null;
@@ -33,6 +33,9 @@ public class CardMp3Player extends CardOcResource {
     private TextView mTextViewTitle;
     private ImageButton mImageButtonPlayPause;
     private ImageButton mImageButtonStop;
+
+    private ImageButton mImageButtonNext;
+    private ImageButton mImageButtonBack;
 
     CardMp3Player(View parentView, Context context) {
         super(parentView, context);
@@ -50,6 +53,23 @@ public class CardMp3Player extends CardOcResource {
             @Override
             public void onClick(View view) {
                 setOcRepresentation(PlayerState.Idle);
+            }
+        });
+
+
+        mImageButtonNext = (ImageButton) parentView.findViewById(R.id.btn_next);
+        mImageButtonNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setOcRepresentation(PlayerState.Next);
+            }
+        });
+
+        mImageButtonBack = (ImageButton) parentView.findViewById(R.id.btn_back);
+        mImageButtonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                setOcRepresentation(PlayerState.Back);
             }
         });
     }

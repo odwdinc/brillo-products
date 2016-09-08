@@ -37,7 +37,7 @@ public class Mp3Player implements Runnable,
                 Back();
                 break;
 
-            case Volup:
+            case VolUp:
                 if(isMuted()){
                     unmute();
                 }
@@ -59,7 +59,7 @@ public class Mp3Player implements Runnable,
     }
 
     public enum MediaState {
-        Idle, Playing, Paused
+        Idle, Playing, Paused,Next,Back
     }
     private MediaState mState;
     private List<OnMediaStateChangeListener> mStateChangeListeners = new LinkedList<>();
@@ -128,6 +128,7 @@ public class Mp3Player implements Runnable,
 
     public void Next() {
         Stop();
+        setMediaState(MediaState.Next);
         currentSongIndex++;
         if (currentSongIndex > sm.size()){
             currentSongIndex = 0;
@@ -137,6 +138,7 @@ public class Mp3Player implements Runnable,
 
     public void Back() {
         Stop();
+        setMediaState(MediaState.Back);
         currentSongIndex--;
         if (currentSongIndex < 0 ) {
             currentSongIndex = sm.size();

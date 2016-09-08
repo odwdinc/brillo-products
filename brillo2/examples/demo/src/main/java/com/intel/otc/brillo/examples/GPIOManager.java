@@ -15,7 +15,7 @@ import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Next;
 import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Play;
 import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Stop;
 import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.VolDown;
-import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Volup;
+import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.VolUp;
 
 /**
  * Created by Ap on 9/8/2016.
@@ -60,7 +60,7 @@ public class GPIOManager implements Runnable {
     private boolean runing =true;
 
     public enum ButtonsState {
-        Play, Stop, Next, Back, Volup, VolDown
+        Play, Stop, Next, Back, VolUp, VolDown
     }
 
     public interface OnButtonStateChangeListener {
@@ -139,7 +139,7 @@ public class GPIOManager implements Runnable {
 
 
                 if(Volup_gpio.getValue()) {
-                    setButtonState(Volup);
+                    setButtonState(VolUp);
                 }
                 if(VolDown_gpio.getValue()) {
                     setButtonState(VolDown);

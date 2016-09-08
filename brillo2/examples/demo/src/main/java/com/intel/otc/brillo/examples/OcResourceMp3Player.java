@@ -61,6 +61,12 @@ public class OcResourceMp3Player extends OcResourceBase implements Mp3Player.OnM
                 else if (v.equals(Mp3Player.MediaState.Playing.toString()) ||
                          v.equals(Mp3Player.MediaState.Paused.toString()))
                     mp3Player.Play();
+                else if (v.equals(Mp3Player.MediaState.Next.toString())){
+                    mp3Player.Next();
+                }
+                else if (v.equals(Mp3Player.MediaState.Back.toString())){
+                    mp3Player.Back();
+                }
             }
         } catch (OcException e) {
             error(e, "Failed to get representation value");
