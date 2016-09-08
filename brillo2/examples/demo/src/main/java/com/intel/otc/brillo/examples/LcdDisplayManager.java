@@ -14,6 +14,7 @@ public class LcdDisplayManager implements Runnable,
     private Mp3Player mp3Player;
     private int timeEscapedInMsec = 0;
     private LcdRgbBacklight lcd;
+    private int LCDTrackPos =0;
 
     public LcdDisplayManager(Mp3Player player) {
         mp3Player = player;
@@ -46,21 +47,48 @@ public class LcdDisplayManager implements Runnable,
                 second %= 60;
                 int hour = minute / 60;
                 minute %= 60;
-                display(1, showTimeEscaped? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ");
+
+                display(0,0, showTimeEscaped? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ");
+                display(1,0, scrollingText(mp3Player.getCurrentTitle()));
+                display(0,13, mp3Player.getCurrentVolume()+"%");
+
             } catch (InterruptedException e) {
                 // Ignore sleep nterruption
             }
     }
 
+    private String scrollingText(String track_){
+        String LCDTrack = track_;
+
+        if(track_.length() > 16){
+            if (LCDTrackPos + 16 <= track_.length()){
+                LCDTrack = track_.substring(LCDTrackPos,16);
+            }else if(LCDTrackPos  <= track_.length()){
+                int firstCount = track_.length() - LCDTrackPos;
+                int nextCount = 13 - firstCount;
+                LCDTrack = track_.substring(LCDTrackPos,firstCount);
+                LCDTrack =LCDTrack +"   " + track_.substring (0,nextCount);
+            }else {
+                LCDTrackPos =0;
+            }
+            LCDTrackPos = LCDTrackPos+2;
+        }
+        return  LCDTrack;
+    }
+
     @Override
     public void onMediaStateChanged(Mp3Player.MediaState state) {
+        lcd.setCursor(0, 5);
         switch (state) {
             case Idle:
-                lcd.clear();
+                lcd.write("Idle    ");
                 timeEscapedInMsec = 0;
                 break;
             case Playing:
-                display(0, mp3Player.getCurrentTitle());
+                lcd.write("Playing ");
+                break;
+            case Paused:
+                lcd.write("Paused  ");
                 break;
         }
     }
@@ -73,8 +101,8 @@ public class LcdDisplayManager implements Runnable,
         }
     }
 
-    private void display(int row, String s) {
-        lcd.setCursor(0, row);
+    private void display(int col, int row, String s) {
+        lcd.setCursor(col, row);
         lcd.write(s);
     }
 
