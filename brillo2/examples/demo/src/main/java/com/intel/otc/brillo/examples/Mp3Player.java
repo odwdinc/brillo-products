@@ -7,6 +7,8 @@ import android.os.Process;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Mp3Player implements Runnable,
         MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener {
@@ -21,6 +23,12 @@ public class Mp3Player implements Runnable,
         Idle, Playing, Paused
     }
     private MediaState mState;
+    private List<OnMediaStateChangeListener> mStateChangeListeners = new LinkedList<>();
+    private int volumeBeforeMute;
+
+    public interface OnMediaStateChangeListener {
+        void onMediaStateChanged(MediaState state);
+    }
 
     public Mp3Player(Context context) {
         mContext = context;
@@ -38,12 +46,12 @@ public class Mp3Player implements Runnable,
         mp = new MediaPlayer();
         mp.setOnCompletionListener(this);
         mp.setOnPreparedListener(this);
-        mState = MediaState.Idle;
+        setMediaState(MediaState.Idle);
     }
 
     @Override
     public void onCompletion(MediaPlayer player) {
-        mState = MediaState.Idle;
+        setMediaState(MediaState.Idle);
         if (++currentSongIndex < sm.size())
             Play();
         else currentSongIndex = 0;
@@ -52,7 +60,7 @@ public class Mp3Player implements Runnable,
     @Override
     public void onPrepared(MediaPlayer player) {
         mp.start();
-        mState = MediaState.Playing;
+        setMediaState(MediaState.Playing);
     }
 
     public void Play() {
@@ -62,11 +70,11 @@ public class Mp3Player implements Runnable,
                 break;
             case Playing:
                 mp.pause();
-                mState = MediaState.Paused;
+                setMediaState(MediaState.Paused);
                 break;
             case Paused:
                 mp.start();
-                mState = MediaState.Playing;
+                setMediaState(MediaState.Playing);
                 break;
         }
     }
@@ -74,8 +82,52 @@ public class Mp3Player implements Runnable,
     public void Stop() {
         if (mState != MediaState.Idle) {
             mp.stop();
-            mState = MediaState.Idle;
+            setMediaState(MediaState.Idle);
         }
+    }
+
+    public boolean isMuted() {
+        return am.isStreamMute(AudioManager.STREAM_MUSIC);
+    }
+
+    public void mute() {
+        if (!isMuted()) {
+            volumeBeforeMute = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0);
+        }
+    }
+
+    public void unmute() {
+        if (isMuted()) {
+            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0);
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, volumeBeforeMute, 0);
+        }
+    }
+
+    public int getMaxVolume() {
+        return am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+    }
+
+    public int getCurrentVolume() {
+        return am.getStreamVolume(AudioManager.STREAM_MUSIC);
+    }
+
+    public void setVolume(int volume) {
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0);
+    }
+
+    private synchronized void setMediaState(MediaState newState) {
+        mState = newState;
+        for (OnMediaStateChangeListener listener : mStateChangeListeners)
+            listener.onMediaStateChanged(newState);
+    }
+
+    public void subscribeStateChangeNotification(OnMediaStateChangeListener listener) {
+        mStateChangeListeners.add(listener);
+    }
+
+    public void unsubscribeStateChangeNotification(OnMediaStateChangeListener listener) {
+        mStateChangeListeners.remove(listener);
     }
 
     public MediaState getCurrentState() {
@@ -83,7 +135,7 @@ public class Mp3Player implements Runnable,
     }
 
     public String getCurrentTitle() {
-        return (mState == MediaState.Playing)? sm.getSongTitle(currentSongIndex) : null;
+        return (mState != MediaState.Idle)? sm.getSongTitle(currentSongIndex) : null;
     }
 
     private void playSong(int index) {
