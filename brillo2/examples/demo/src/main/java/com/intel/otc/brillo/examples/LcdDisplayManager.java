@@ -15,9 +15,11 @@ public class LcdDisplayManager implements Runnable,
 
     private Mp3Player mp3Player;
     private int timeEscapedInMsec = 0;
-    //private LcdRgbBacklight lcd;
+    private LcdRgbBacklight lcd;
     private FullGraphicSmartController Flcd;
     private int LCDTrackPos =0;
+    String MediaStateStatus = "";
+
     private byte heart[] = {0x0, 0xa, 0x1f, 0x1f, 0xe, 0x4, 0x0, 0x0};
 
     private byte Step0[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1F};
@@ -32,8 +34,9 @@ public class LcdDisplayManager implements Runnable,
 
     public LcdDisplayManager(Mp3Player player) {
         mp3Player = player;
-        //lcd = new LcdRgbBacklight();
+        lcd = new LcdRgbBacklight();
         Flcd = new FullGraphicSmartController();
+        lcd.createChar(0,heart);
         /*
         lcd.createChar(0,heart);
         lcd.createChar(1,Step1);
@@ -52,50 +55,65 @@ public class LcdDisplayManager implements Runnable,
         Flcd.CLEAR();
         Log.d(TAG, "LCD display manager started");
 
-        /*
+
         lcd.begin(16, 2, LcdRgbBacklight.LCD_5x10DOTS);
         lcd.write("Hello Traveler");
         lcd.setCursor(0, 1);
         lcd.write(" Intel ");
         lcd.write((byte) 0);
         lcd.write(" Brillo!");
-        */
 
-        display(1,0, "Hello!");
+        display(1,0, "Hello!",Flcd);
+
+
+
         sleep(5000);
         Flcd.CLEAR();
-        display(0,2, "Idle    ");
+        lcd.clear();
+        display(0,2, "Idle    ",Flcd);
+        display(0,5, "Idle    ",lcd);
         //display(1,0, scrollingText(mp3Player.getCurrentTitle()));
         //lcd.createChar(0,Step0);
-        mp3Player.Play();
+        //mp3Player.Play();
         boolean showTimeEscaped = false;
-        while (true)
-            try {
-                TimeUnit.MILLISECONDS.sleep(Service_Interval_In_Msec);
-                Mp3Player.MediaState state = mp3Player.getCurrentState();
-                switch (state) {
-                    case Idle:
-                        continue;
-                    case Playing:
-                        timeEscapedInMsec += Service_Interval_In_Msec;
-                        showTimeEscaped = true;
-                        break;
-                    case Paused:
-                        showTimeEscaped = !showTimeEscaped;
-                        break;
-                }
-                int second = timeEscapedInMsec / 1000;
-                int minute = second / 60;
-                second %= 60;
-                int hour = minute / 60;
-                minute %= 60;
-
-                display(1,0, " "+ (showTimeEscaped? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : " ")+ "      " + mp3Player.getCurrentVolume()+"%");
-                display(2,0, scrollingText(mp3Player.getCurrentTitle()));
-
-            } catch (InterruptedException e) {
-                // Ignore sleep nterruption
+        while (true) {
+            // try {
+            timeEscapedInMsec = mp3Player.getCurrentTrackPosition();
+            //TimeUnit.MILLISECONDS.sleep(Service_Interval_In_Msec);
+            Mp3Player.MediaState state = mp3Player.getCurrentState();
+            switch (state) {
+                case Idle:
+                    continue;
+                case Playing:
+                    //timeEscapedInMsec += Service_Interval_In_Msec;
+                    showTimeEscaped = true;
+                    break;
+                case Paused:
+                    showTimeEscaped = !showTimeEscaped;
+                    break;
             }
+            int second = timeEscapedInMsec / 1000;
+            int minute = second / 60;
+            second %= 60;
+            int hour = minute / 60;
+            minute %= 60;
+
+            display(0, 2, MediaStateStatus, Flcd);
+            display(1, 0, " " + (showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : " "), Flcd);
+            display(1, 3, "      " + mp3Player.getCurrentVolume() + "%", Flcd);
+            display(2, 0, scrollingText(mp3Player.getCurrentTitle()), Flcd);
+
+
+            display(0, 0, showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ", lcd);
+            display(0, 5, MediaStateStatus, lcd);
+            display(0, 13, mp3Player.getCurrentVolume() + "%", lcd);
+            display(1, 0, scrollingText(mp3Player.getCurrentTitle()), lcd);
+
+
+            //} catch (InterruptedException e) {
+            // Ignore sleep nterruption
+            //}
+        }
     }
 
     private String scrollingText(String track_){
@@ -104,8 +122,6 @@ public class LcdDisplayManager implements Runnable,
         if(track_.length() > 16){
             if (LCDTrackPos + 16 <= track_.length()-1){
                 LCDTrack = track_.substring(LCDTrackPos,LCDTrackPos+16);
-
-                        //9           10
             }else if(LCDTrackPos  <= track_.length()){
 
                 int firstCount = (track_.length()) - LCDTrackPos;
@@ -132,24 +148,21 @@ public class LcdDisplayManager implements Runnable,
 
     @Override
     public void onMediaStateChanged(Mp3Player.MediaState state) {
-        //lcd.setCursor(0, 5);
-        if(Flcd.started) {
+            //lcd.clear();
+            //Flcd.CLEAR();
+
             switch (state) {
                 case Idle:
-                    display(0, 2, "Idle        ");
-                    //lcd.write("Idle    ");
+                    MediaStateStatus = "Idle";
                     timeEscapedInMsec = 0;
                     break;
                 case Playing:
-                    display(0, 2, "Playing     ");
-                    //lcd.write("Playing ");
+                    MediaStateStatus ="Playing";
                     break;
                 case Paused:
-                    display(0, 2, "Paused      ");
-                    //lcd.write("Paused  ");
+                    MediaStateStatus="Paused";
                     break;
             }
-        }
     }
 
     int mDivisions =16;
@@ -177,12 +190,18 @@ public class LcdDisplayManager implements Runnable,
         }
     }
 
-    private void display(int row, int col, String s) {
+    private void display(int row, int col, String s, FullGraphicSmartController _lcdD) {
+        if(_lcdD.started) {
+            _lcdD.DisplayString(row, col, s);
+        }
 
-        Flcd.DisplayString(row,col,s);
+    }
 
-        //lcd.setCursor(col, row);
-        //lcd.write(s);
+    private void display(int row, int col, String s, LcdRgbBacklight _lcdD) {
+        if(_lcdD!=null) {
+            _lcdD.setCursor(col, row);
+            _lcdD.write(s);
+        }
     }
 
     private String toLeadingZeroNumber(int n) {

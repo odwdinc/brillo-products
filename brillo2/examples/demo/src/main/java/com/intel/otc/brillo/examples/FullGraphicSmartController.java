@@ -76,7 +76,6 @@ public class FullGraphicSmartController {
             }
 
             clockPin.setValue(true);
-            //delayns();
             clockPin.setValue(false);
         }
     }
@@ -171,6 +170,7 @@ public class FullGraphicSmartController {
     {
         WriteCommand(0x30);
         WriteCommand(0x01);
+        delayMicroseconds(500);          // this command takes a long time!
     }
 
 

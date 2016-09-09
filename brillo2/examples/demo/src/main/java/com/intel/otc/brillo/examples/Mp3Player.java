@@ -147,10 +147,15 @@ public class Mp3Player implements Runnable,
     @Override
     public void onPrepared(MediaPlayer player) {
         mp.start();
+
         setMediaState(MediaState.Playing);
         // Enabled Visualizer
 
         //mVisualizer.setEnabled(true);
+    }
+    //the current position in milliseconds
+    public int getCurrentTrackPosition(){
+        return  mp.getCurrentPosition();
     }
 
     public void Play() {
