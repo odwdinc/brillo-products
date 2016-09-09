@@ -25,8 +25,6 @@ public class Mp3Player implements Runnable,
     private  int volumeStep = 3;
     WifiManager.WifiLock wifiLock;
     private Visualizer mVisualizer;
-    private byte[] mBytes;
-    private byte[] mFFTBytes;
 
     @Override
     public void onButtonStateChanged(GPIOManager.ButtonsState state) {
@@ -99,8 +97,8 @@ public class Mp3Player implements Runnable,
         wifiLock = ((WifiManager) mContext.getSystemService(Context.WIFI_SERVICE))
                 .createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
 
-        mVisualizer = new Visualizer(mp.getAudioSessionId());
-        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
+        //mVisualizer = new Visualizer(mp.getAudioSessionId());
+        //mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
         Visualizer.OnDataCaptureListener captureListener = new Visualizer.OnDataCaptureListener()
         {
             @Override
@@ -118,8 +116,8 @@ public class Mp3Player implements Runnable,
             }
 
         };
-        mVisualizer.setDataCaptureListener(captureListener,
-                Visualizer.getMaxCaptureRate() / 2, true, true);
+        //mVisualizer.setDataCaptureListener(captureListener,
+        //        Visualizer.getMaxCaptureRate() / 2, true, true);
 
 
         setMediaState(MediaState.Idle);
@@ -127,13 +125,11 @@ public class Mp3Player implements Runnable,
 
 
     private synchronized void updateVisualizer(byte[] bytes) {
-        mBytes = bytes;
         for (OnMediaStateChangeListener listener : mStateChangeListeners)
             listener.onVisualizerChanged(bytes, false);
     }
 
     private synchronized void updateVisualizerFFT(byte[] bytes) {
-        mFFTBytes = bytes;
         for (OnMediaStateChangeListener listener : mStateChangeListeners)
             listener.onVisualizerChanged(bytes, true);
     }
@@ -145,7 +141,7 @@ public class Mp3Player implements Runnable,
             Play();
         else currentSongIndex = 0;
         // Disable Visualizer
-        mVisualizer.setEnabled(false);
+        //mVisualizer.setEnabled(false);
     }
 
     @Override
@@ -154,7 +150,7 @@ public class Mp3Player implements Runnable,
         setMediaState(MediaState.Playing);
         // Enabled Visualizer
 
-        mVisualizer.setEnabled(true);
+        //mVisualizer.setEnabled(true);
     }
 
     public void Play() {
@@ -254,7 +250,7 @@ public class Mp3Player implements Runnable,
     }
 
     public String getCurrentTitle() {
-        return (mState != MediaState.Idle)? sm.getSongTitle(currentSongIndex) : null;
+        return sm.getSongTitle(currentSongIndex);
     }
 
     private void playSong(int index) {

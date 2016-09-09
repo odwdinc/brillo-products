@@ -15,7 +15,8 @@ public class LcdDisplayManager implements Runnable,
 
     private Mp3Player mp3Player;
     private int timeEscapedInMsec = 0;
-    private LcdRgbBacklight lcd;
+    //private LcdRgbBacklight lcd;
+    private FullGraphicSmartController Flcd;
     private int LCDTrackPos =0;
     private byte heart[] = {0x0, 0xa, 0x1f, 0x1f, 0xe, 0x4, 0x0, 0x0};
 
@@ -26,11 +27,14 @@ public class LcdDisplayManager implements Runnable,
     private byte Step4[] = {0x0, 0x0, 0x0, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
     private byte Step5[] = {0x0, 0x0, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
     private byte Step6[] = {0x0, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F};
-    private byte Step7[] = {0x0, 0x1F, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    private byte Step7[] = {0x0, 0x1F, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,0x0};
+
 
     public LcdDisplayManager(Mp3Player player) {
         mp3Player = player;
-        lcd = new LcdRgbBacklight();
+        //lcd = new LcdRgbBacklight();
+        Flcd = new FullGraphicSmartController();
+        /*
         lcd.createChar(0,heart);
         lcd.createChar(1,Step1);
         lcd.createChar(2,Step2);
@@ -39,22 +43,31 @@ public class LcdDisplayManager implements Runnable,
         lcd.createChar(5,Step5);
         lcd.createChar(6,Step6);
         lcd.createChar(7,Step7);
+        */
     }
 
     @Override
     public void run() {
+        Flcd.Begin();
+        Flcd.CLEAR();
         Log.d(TAG, "LCD display manager started");
 
+        /*
         lcd.begin(16, 2, LcdRgbBacklight.LCD_5x10DOTS);
         lcd.write("Hello Traveler");
         lcd.setCursor(0, 1);
         lcd.write(" Intel ");
         lcd.write((byte) 0);
         lcd.write(" Brillo!");
-        sleep(2000);
+        */
 
-        lcd.createChar(0,Step0);
-
+        display(1,0, "Hello!");
+        sleep(5000);
+        Flcd.CLEAR();
+        display(0,2, "Idle    ");
+        //display(1,0, scrollingText(mp3Player.getCurrentTitle()));
+        //lcd.createChar(0,Step0);
+        mp3Player.Play();
         boolean showTimeEscaped = false;
         while (true)
             try {
@@ -77,9 +90,8 @@ public class LcdDisplayManager implements Runnable,
                 int hour = minute / 60;
                 minute %= 60;
 
-                display(0,0, showTimeEscaped? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ");
-                display(1,0, scrollingText(mp3Player.getCurrentTitle()));
-                display(0,13, mp3Player.getCurrentVolume()+"%");
+                display(1,0, " "+ (showTimeEscaped? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : " ")+ "      " + mp3Player.getCurrentVolume()+"%");
+                display(2,0, scrollingText(mp3Player.getCurrentTitle()));
 
             } catch (InterruptedException e) {
                 // Ignore sleep nterruption
@@ -87,16 +99,29 @@ public class LcdDisplayManager implements Runnable,
     }
 
     private String scrollingText(String track_){
-        String LCDTrack = track_;
+        String LCDTrack = "";
 
         if(track_.length() > 16){
-            if (LCDTrackPos + 16 <= track_.length()){
-                LCDTrack = track_.substring(LCDTrackPos,16);
+            if (LCDTrackPos + 16 <= track_.length()-1){
+                LCDTrack = track_.substring(LCDTrackPos,LCDTrackPos+16);
+
+                        //9           10
             }else if(LCDTrackPos  <= track_.length()){
-                int firstCount = track_.length() - LCDTrackPos;
-                int nextCount = 13 - firstCount;
-                LCDTrack = track_.substring(LCDTrackPos,firstCount);
-                LCDTrack =LCDTrack +"   " + track_.substring (0,nextCount);
+
+                int firstCount = (track_.length()) - LCDTrackPos;
+
+                int nextCount = 0;
+                if(firstCount > 14){
+                    nextCount = firstCount - 14;
+                }else
+                {
+                    nextCount = 14 - firstCount;
+                }
+
+                Log.i(TAG,"LCDTrackPos: "+ LCDTrackPos +" tl: "+track_.length()+" nextCount: "+nextCount+", firstCount: "+firstCount);
+
+                LCDTrack = track_.substring(LCDTrackPos,LCDTrackPos+firstCount);
+                LCDTrack += "  " + track_.substring(0,nextCount);
             }else {
                 LCDTrackPos =0;
             }
@@ -107,18 +132,23 @@ public class LcdDisplayManager implements Runnable,
 
     @Override
     public void onMediaStateChanged(Mp3Player.MediaState state) {
-        lcd.setCursor(0, 5);
-        switch (state) {
-            case Idle:
-                lcd.write("Idle    ");
-                timeEscapedInMsec = 0;
-                break;
-            case Playing:
-                lcd.write("Playing ");
-                break;
-            case Paused:
-                lcd.write("Paused  ");
-                break;
+        //lcd.setCursor(0, 5);
+        if(Flcd.started) {
+            switch (state) {
+                case Idle:
+                    display(0, 2, "Idle        ");
+                    //lcd.write("Idle    ");
+                    timeEscapedInMsec = 0;
+                    break;
+                case Playing:
+                    display(0, 2, "Playing     ");
+                    //lcd.write("Playing ");
+                    break;
+                case Paused:
+                    display(0, 2, "Paused      ");
+                    //lcd.write("Paused  ");
+                    break;
+            }
         }
     }
 
@@ -132,8 +162,8 @@ public class LcdDisplayManager implements Runnable,
                 byte ifk = mBytes[mDivisions * i + 1];
                 float magnitude = (rfk * rfk + ifk * ifk);
                 int dbValue = (int) (10 * Math.log10(magnitude));
-                lcd.setCursor(i, 1);
-                lcd.write((byte) (dbValue * 2 - 10));
+                //lcd.setCursor(i, 1);
+                //lcd.write((byte) (dbValue * 2 - 10));
             }
         }
 
@@ -143,13 +173,16 @@ public class LcdDisplayManager implements Runnable,
     public void onBrightnessChanged(int brightness) {
         if (0 <= brightness && brightness <= 100) {
             int c = brightness * 255 / 100;
-            lcd.setRGB(c, c, c);
+            //lcd.setRGB(c, c, c);
         }
     }
 
-    private void display(int col, int row, String s) {
-        lcd.setCursor(col, row);
-        lcd.write(s);
+    private void display(int row, int col, String s) {
+
+        Flcd.DisplayString(row,col,s);
+
+        //lcd.setCursor(col, row);
+        //lcd.write(s);
     }
 
     private String toLeadingZeroNumber(int n) {

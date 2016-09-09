@@ -85,4 +85,9 @@ public class OcResourceMp3Player extends OcResourceBase implements Mp3Player.OnM
             mObservationIds.clear();
         }
     }
+
+    @Override
+    public void onVisualizerChanged(byte[] mBytes, boolean isFFT) {
+
+    }
 }

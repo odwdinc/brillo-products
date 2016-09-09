@@ -73,6 +73,9 @@ public class GPIOManager implements Runnable {
     public GPIOManager() {
         mService = new PeripheralManagerService();
 
+    }
+
+    private void setup(){
         try {
             gpios = listGpios();
 
@@ -93,7 +96,6 @@ public class GPIOManager implements Runnable {
         } catch (RemoteException | ErrnoException e) {
             Log.e(TAG, "Error on PeripheralIO API", e);
         }
-
     }
 
     private Gpio setupGPIO(String _portName) throws RemoteException, ErrnoException {
@@ -159,6 +161,7 @@ public class GPIOManager implements Runnable {
 
     @Override
     public void run() {
+        setup();
         Log.i(TAG, "Executing task GPIOManager");
         while (runing){
 

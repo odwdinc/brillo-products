@@ -45,7 +45,7 @@ public class MyTestService extends HomeService {
         mp3Player.subscribeStateChangeNotification(lcdDisplayManager);
 
         ButtonManager = new GPIOManager();
-        new Thread(ButtonManager).start();
+        //new Thread(ButtonManager).start();
         ButtonManager.subscribeStateChangeNotification(mp3Player);
 
         ocServer = new OcServer(this);
