@@ -4,7 +4,6 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
-import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.os.Process;
 import android.util.Log;
@@ -23,8 +22,8 @@ public class Mp3Player implements Runnable,
     private AudioManager am;
     private MediaPlayer mp;
     private  int volumeStep = 3;
-    WifiManager.WifiLock wifiLock;
-    private Visualizer mVisualizer;
+    //WifiManager.WifiLock wifiLock;
+    //private Visualizer mVisualizer;
 
     @Override
     public void onButtonStateChanged(GPIOManager.ButtonsState state) {
@@ -94,8 +93,8 @@ public class Mp3Player implements Runnable,
         mp.setOnCompletionListener(this);
         mp.setOnPreparedListener(this);
         mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
-        wifiLock = ((WifiManager) mContext.getSystemService(Context.WIFI_SERVICE))
-                .createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
+        //wifiLock = ((WifiManager) mContext.getSystemService(Context.WIFI_SERVICE))
+         //       .createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
 
         //mVisualizer = new Visualizer(mp.getAudioSessionId());
         //mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
@@ -166,10 +165,10 @@ public class Mp3Player implements Runnable,
             case Playing:
                 mp.pause();
                 setMediaState(MediaState.Paused);
-                wifiLock.release();
+                //wifiLock.release();
                 break;
             case Paused:
-                wifiLock.acquire();
+                //wifiLock.acquire();
                 mp.start();
                 setMediaState(MediaState.Playing);
                 break;
@@ -178,7 +177,7 @@ public class Mp3Player implements Runnable,
 
     public void Stop() {
         if (mState != MediaState.Idle) {
-            wifiLock.release();
+            //wifiLock.release();
             mp.stop();
             setMediaState(MediaState.Idle);
         }
@@ -260,7 +259,7 @@ public class Mp3Player implements Runnable,
 
     private void playSong(int index) {
         try {
-            wifiLock.acquire();
+            //wifiLock.acquire();
             Log.d(TAG, "Playing " + sm.getSongTitle(index));
             mp.reset();
             if(sm.isIndexUrl(index)) {

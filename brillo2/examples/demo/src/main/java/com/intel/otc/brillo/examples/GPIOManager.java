@@ -102,9 +102,12 @@ public class GPIOManager implements Runnable {
         Gpio _port;
         _portName = gpios.get(gpios.indexOf(_portName));
         _port =  mService.openGpio(_portName);
+
         _port.setDirection(Gpio.DIRECTION_IN);
-        _port.setEdgeTriggerType(_port.EDGE_FALLING);
-        _port.registerInterruptHandler(GPIOlistener);
+        if(_port != null) {
+            //_port.registerInterruptHandler(GPIOlistener);
+            //_port.setEdgeTriggerType(_port.EDGE_FALLING);
+        }
         return _port;
     }
 
@@ -119,32 +122,38 @@ public class GPIOManager implements Runnable {
         VolDown_gpio.close();
     }
 
-    private PioInterruptEventListener GPIOlistener =new PioInterruptEventListener(){
+    private PioInterruptEventListener GPIOlistener = new PioInterruptEventListener(){
 
         @Override
         public boolean onInterruptEvent(String name) {
             try {
-                if(Play_gpio.getValue()) {
+                if(!Play_gpio.getValue()) {
                     setButtonState(Play);
+                    Log.i(TAG, "setButtonState Play");
                 }
-                if(Stop_gpio.getValue()) {
+                if(!Stop_gpio.getValue()) {
                     setButtonState(Stop);
+                    Log.i(TAG, "setButtonState Stop");
                 }
 
 
-                if(Next_gpio.getValue()) {
+                if(!Next_gpio.getValue()) {
                     setButtonState(Next);
+                    Log.i(TAG, "setButtonState Next");
                 }
-                if(Back_gpio.getValue()) {
+                if(!Back_gpio.getValue()) {
                     setButtonState(Back);
+                    Log.i(TAG, "setButtonState Back");
                 }
 
 
-                if(Volup_gpio.getValue()) {
+                if(!Volup_gpio.getValue()) {
                     setButtonState(VolUp);
+                    Log.i(TAG, "setButtonState VolUp");
                 }
-                if(VolDown_gpio.getValue()) {
+                if(!VolDown_gpio.getValue()) {
                     setButtonState(VolDown);
+                    Log.i(TAG, "setButtonState VolDown");
                 }
             } catch (RemoteException | ErrnoException e) {
                 Log.e(TAG, "Error on PeripheralIO API", e);
@@ -164,7 +173,7 @@ public class GPIOManager implements Runnable {
         setup();
         Log.i(TAG, "Executing task GPIOManager");
         while (runing){
-
+            GPIOlistener.onInterruptEvent("");
         }
         closePorts();
     }
