@@ -52,7 +52,7 @@ public class LcdDisplayManager implements Runnable,
     @Override
     public void run() {
         //Flcd.Begin();
-       // Flcd.CLEAR();
+        //Flcd.CLEAR();
         Log.d(TAG, "LCD display manager started");
 
 
@@ -70,45 +70,44 @@ public class LcdDisplayManager implements Runnable,
         sleep(5000);
         //Flcd.CLEAR();
         lcd.clear();
-       // display(0,2, "Idle    ",Flcd);
+        //display(0,2, "Idle    ",Flcd);
         display(0,5, "Idle    ",lcd);
         //display(1,0, scrollingText(mp3Player.getCurrentTitle()));
         //lcd.createChar(0,Step0);
-        mp3Player.Play();
+        //mp3Player.Play();
         boolean showTimeEscaped = false;
         while (true) {
              try {
-                timeEscapedInMsec = mp3Player.getCurrentTrackPosition();
-                TimeUnit.MILLISECONDS.sleep(Service_Interval_In_Msec);
-                Mp3Player.MediaState state = mp3Player.getCurrentState();
-                 display(0, 5, "        ", lcd);
-                 display(0, 6, MediaStateStatus, lcd);
-                switch (state) {
-                    case Idle:
-                        continue;
-                    case Playing:
-                        //timeEscapedInMsec += Service_Interval_In_Msec;
-                        showTimeEscaped = true;
-                        break;
-                    case Paused:
-                        showTimeEscaped = !showTimeEscaped;
-                        break;
-                }
-                int second = timeEscapedInMsec / 1000;
-                int minute = second / 60;
-                second %= 60;
-                int hour = minute / 60;
-                minute %= 60;
+            timeEscapedInMsec = mp3Player.getCurrentTrackPosition();
+            TimeUnit.MILLISECONDS.sleep(Service_Interval_In_Msec);
+            Mp3Player.MediaState state = mp3Player.getCurrentState();
+            switch (state) {
+                case Idle:
+                    continue;
+                case Playing:
+                    //timeEscapedInMsec += Service_Interval_In_Msec;
+                    showTimeEscaped = true;
+                    break;
+                case Paused:
+                    showTimeEscaped = !showTimeEscaped;
+                    break;
+            }
+            int second = timeEscapedInMsec / 1000;
+            int minute = second / 60;
+            second %= 60;
+            int hour = minute / 60;
+            minute %= 60;
+            /*
+            display(0, 2, MediaStateStatus, Flcd);
+            display(1, 0, " " + (showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : " "), Flcd);
+            display(1, 3, "      " + mp3Player.getCurrentVolume() + "%", Flcd);
+            display(2, 0, scrollingText(mp3Player.getCurrentTitle()), Flcd);
+            */
 
-                //display(0, 2, MediaStateStatus, Flcd);
-                //display(1, 0, " " + (showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : " "), Flcd);
-                //display(1, 3, "      " + mp3Player.getCurrentVolume() + "%", Flcd);
-                //display(2, 0, scrollingText(mp3Player.getCurrentTitle()), Flcd);
-
-
-                display(0, 0, showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ", lcd);
-                display(0, 14, mp3Player.getCurrentVolume() + "", lcd);
-                display(1, 0, scrollingText(mp3Player.getCurrentTitle()), lcd);
+            display(0, 0, showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ", lcd);
+            display(0, 5, MediaStateStatus, lcd);
+            display(0, 13, mp3Player.getCurrentVolume() + "%", lcd);
+            display(1, 0, scrollingText(mp3Player.getCurrentTitle()), lcd);
 
 
             } catch (InterruptedException e) {
@@ -135,7 +134,7 @@ public class LcdDisplayManager implements Runnable,
                     nextCount = 14 - firstCount;
                 }
 
-                //Log.i(TAG,"LCDTrackPos: "+ LCDTrackPos +" tl: "+track_.length()+" nextCount: "+nextCount+", firstCount: "+firstCount);
+                Log.i(TAG,"LCDTrackPos: "+ LCDTrackPos +" tl: "+track_.length()+" nextCount: "+nextCount+", firstCount: "+firstCount);
 
                 LCDTrack = track_.substring(LCDTrackPos,LCDTrackPos+firstCount);
                 LCDTrack += "  " + track_.substring(0,nextCount);
@@ -156,7 +155,6 @@ public class LcdDisplayManager implements Runnable,
                 case Idle:
                     MediaStateStatus = "Idle";
                     timeEscapedInMsec = 0;
-                    display(1, 0, "                ", lcd);
                     break;
                 case Playing:
                     MediaStateStatus ="Playing";
