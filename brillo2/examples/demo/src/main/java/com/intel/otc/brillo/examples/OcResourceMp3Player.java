@@ -40,6 +40,8 @@ public class OcResourceMp3Player extends OcResourceBase implements Mp3Player.OnM
                     Mp3Player.MediaState.Idle.toString(),
                     Mp3Player.MediaState.Playing.toString(),
                     Mp3Player.MediaState.Paused.toString(),
+                    Mp3Player.MediaState.Next.toString(),
+                    Mp3Player.MediaState.Back.toString(),
             });
             rep.setValue(KEY_STATE, mp3Player.getCurrentState().toString());
             String title = mp3Player.getCurrentTitle();
@@ -54,6 +56,7 @@ public class OcResourceMp3Player extends OcResourceBase implements Mp3Player.OnM
     @Override
     protected void setOcRepresentation(OcRepresentation rep) {
         try {
+            Log.d(TAG,"setOcRepresentation");
             if (rep.hasAttribute(KEY_STATE)) {
                 String v = rep.getValue(KEY_STATE);
                 if (v.equals(Mp3Player.MediaState.Idle.toString()))

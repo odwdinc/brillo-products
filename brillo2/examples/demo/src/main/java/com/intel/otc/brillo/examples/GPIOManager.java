@@ -10,6 +10,7 @@ import android.util.Log;
 import java.util.LinkedList;
 import java.util.List;
 
+import static android.os.SystemClock.sleep;
 import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Back;
 import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Next;
 import static com.intel.otc.brillo.examples.GPIOManager.ButtonsState.Play;
@@ -130,30 +131,36 @@ public class GPIOManager implements Runnable {
                 if(!Play_gpio.getValue()) {
                     setButtonState(Play);
                     Log.i(TAG, "setButtonState Play");
+                    while (!Play_gpio.getValue());
                 }
                 if(!Stop_gpio.getValue()) {
                     setButtonState(Stop);
                     Log.i(TAG, "setButtonState Stop");
+                    while (!Stop_gpio.getValue());
                 }
 
 
                 if(!Next_gpio.getValue()) {
                     setButtonState(Next);
                     Log.i(TAG, "setButtonState Next");
+                    while (!Next_gpio.getValue());
                 }
                 if(!Back_gpio.getValue()) {
                     setButtonState(Back);
                     Log.i(TAG, "setButtonState Back");
+                    while (!Back_gpio.getValue());
                 }
 
 
                 if(!Volup_gpio.getValue()) {
                     setButtonState(VolUp);
                     Log.i(TAG, "setButtonState VolUp");
+                    while (!Volup_gpio.getValue());
                 }
                 if(!VolDown_gpio.getValue()) {
                     setButtonState(VolDown);
                     Log.i(TAG, "setButtonState VolDown");
+                    while (!VolDown_gpio.getValue());
                 }
             } catch (RemoteException | ErrnoException e) {
                 Log.e(TAG, "Error on PeripheralIO API", e);

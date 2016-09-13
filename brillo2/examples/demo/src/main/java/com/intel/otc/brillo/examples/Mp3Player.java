@@ -18,15 +18,16 @@ public class Mp3Player implements Runnable,
 
     private Context mContext;
     private SongsManager sm;
-    private int currentSongIndex = 0;
+    public int currentSongIndex = 0;
     private AudioManager am;
     private MediaPlayer mp;
-    private  int volumeStep = 3;
-    //WifiManager.WifiLock wifiLock;
-    //private Visualizer mVisualizer;
+    private  int volumeStep = 1;
+    private boolean autoNext =false;
+
 
     @Override
     public void onButtonStateChanged(GPIOManager.ButtonsState state) {
+        Log.d(TAG,"onButtonStateChanged");
         switch (state){
             case Play:
                 Play();
@@ -93,32 +94,6 @@ public class Mp3Player implements Runnable,
         mp.setOnCompletionListener(this);
         mp.setOnPreparedListener(this);
         mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
-        //wifiLock = ((WifiManager) mContext.getSystemService(Context.WIFI_SERVICE))
-         //       .createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
-
-        //mVisualizer = new Visualizer(mp.getAudioSessionId());
-        //mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
-        Visualizer.OnDataCaptureListener captureListener = new Visualizer.OnDataCaptureListener()
-        {
-            @Override
-            public void onWaveFormDataCapture(Visualizer visualizer, byte[] bytes,
-                                              int samplingRate)
-            {
-                updateVisualizer(bytes);
-            }
-
-            @Override
-            public void onFftDataCapture(Visualizer visualizer, byte[] bytes,
-                                         int samplingRate)
-            {
-                updateVisualizerFFT(bytes);
-            }
-
-        };
-        //mVisualizer.setDataCaptureListener(captureListener,
-        //        Visualizer.getMaxCaptureRate() / 2, true, true);
-
-
         setMediaState(MediaState.Idle);
     }
 
@@ -136,28 +111,29 @@ public class Mp3Player implements Runnable,
     @Override
     public void onCompletion(MediaPlayer player) {
         setMediaState(MediaState.Idle);
-        if (++currentSongIndex < sm.size())
-            Play();
-        else currentSongIndex = 0;
-        // Disable Visualizer
-        //mVisualizer.setEnabled(false);
+        if(autoNext) {
+            if (++currentSongIndex < sm.size()) {
+                Log.d(TAG, "onCompletion()");
+                Play();
+            } else {
+                currentSongIndex = 0;
+            }
+        }
     }
 
     @Override
     public void onPrepared(MediaPlayer player) {
         mp.start();
-
         setMediaState(MediaState.Playing);
-        // Enabled Visualizer
-
-        //mVisualizer.setEnabled(true);
     }
+
     //the current position in milliseconds
     public int getCurrentTrackPosition(){
         return  mp.getCurrentPosition();
     }
 
     public void Play() {
+        autoNext = true;
         switch (mState) {
             case Idle:
                 playSong(currentSongIndex);
@@ -165,10 +141,8 @@ public class Mp3Player implements Runnable,
             case Playing:
                 mp.pause();
                 setMediaState(MediaState.Paused);
-                //wifiLock.release();
                 break;
             case Paused:
-                //wifiLock.acquire();
                 mp.start();
                 setMediaState(MediaState.Playing);
                 break;
@@ -176,8 +150,8 @@ public class Mp3Player implements Runnable,
     }
 
     public void Stop() {
+        autoNext =false;
         if (mState != MediaState.Idle) {
-            //wifiLock.release();
             mp.stop();
             setMediaState(MediaState.Idle);
         }
@@ -185,23 +159,32 @@ public class Mp3Player implements Runnable,
 
 
     public void Next() {
+        boolean au = autoNext;
         Stop();
-        setMediaState(MediaState.Next);
+        autoNext = au;
+        //setMediaState(MediaState.Next);
         currentSongIndex++;
-        if (currentSongIndex > sm.size()){
+        if (currentSongIndex > sm.size()-1){
             currentSongIndex = 0;
         }
-        Play();
+        if(autoNext == true){
+            Play();
+        }
+
     }
 
     public void Back() {
+        boolean au = autoNext;
         Stop();
-        setMediaState(MediaState.Back);
+        autoNext = au;
+        //setMediaState(MediaState.Back);
         currentSongIndex--;
         if (currentSongIndex < 0 ) {
-            currentSongIndex = sm.size();
+            currentSongIndex = sm.size()-1;
         }
-        Play();
+        if(autoNext == true){
+            Play();
+        }
     }
 
     public boolean isMuted() {
@@ -259,7 +242,6 @@ public class Mp3Player implements Runnable,
 
     private void playSong(int index) {
         try {
-            //wifiLock.acquire();
             Log.d(TAG, "Playing " + sm.getSongTitle(index));
             mp.reset();
             if(sm.isIndexUrl(index)) {

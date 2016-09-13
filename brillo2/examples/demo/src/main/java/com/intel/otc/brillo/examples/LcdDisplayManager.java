@@ -74,74 +74,77 @@ public class LcdDisplayManager implements Runnable,
         display(0,5, "Idle    ",lcd);
         //display(1,0, scrollingText(mp3Player.getCurrentTitle()));
         //lcd.createChar(0,Step0);
-        //mp3Player.Play();
         boolean showTimeEscaped = false;
         while (true) {
-             try {
-            timeEscapedInMsec = mp3Player.getCurrentTrackPosition();
-            TimeUnit.MILLISECONDS.sleep(Service_Interval_In_Msec);
-            Mp3Player.MediaState state = mp3Player.getCurrentState();
-            switch (state) {
-                case Idle:
-                    continue;
-                case Playing:
-                    //timeEscapedInMsec += Service_Interval_In_Msec;
-                    showTimeEscaped = true;
-                    break;
-                case Paused:
-                    showTimeEscaped = !showTimeEscaped;
-                    break;
-            }
-            int second = timeEscapedInMsec / 1000;
-            int minute = second / 60;
-            second %= 60;
-            int hour = minute / 60;
-            minute %= 60;
-            /*
-            display(0, 2, MediaStateStatus, Flcd);
-            display(1, 0, " " + (showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : " "), Flcd);
-            display(1, 3, "      " + mp3Player.getCurrentVolume() + "%", Flcd);
-            display(2, 0, scrollingText(mp3Player.getCurrentTitle()), Flcd);
-            */
+             //try {
+                 display(0, 5, "         ", lcd);
+                 display(0, 5, " "+MediaStateStatus, lcd);
+                 display(0, 14, "  ", lcd);
+                 display(0, 14, mp3Player.getCurrentVolume() +"", lcd);
+                 display(1, 0, "                ",lcd);
+                 display(1, 0, scrollingText(mp3Player.getCurrentTitle()),lcd);
 
-            display(0, 0, showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ", lcd);
-            display(0, 5, MediaStateStatus, lcd);
-            display(0, 13, mp3Player.getCurrentVolume() + "%", lcd);
-            display(1, 0, scrollingText(mp3Player.getCurrentTitle()), lcd);
+                 timeEscapedInMsec = mp3Player.getCurrentTrackPosition();
+                //TimeUnit.MILLISECONDS.sleep(Service_Interval_In_Msec);
+                Mp3Player.MediaState state = mp3Player.getCurrentState();
+                switch (state) {
+                    case Idle:
+                        display(0, 0, "     ",lcd);
+                        display(0, 0, "Tr:"+(mp3Player.currentSongIndex+1),lcd);
 
 
-            } catch (InterruptedException e) {
+                        continue;
+                    case Playing:
+                        showTimeEscaped = true;
+                        break;
+                    case Paused:
+                        showTimeEscaped = !showTimeEscaped;
+                        break;
+                }
+                int second = timeEscapedInMsec / 1000;
+                int minute = second / 60;
+                second %= 60;
+                int hour = minute / 60;
+                minute %= 60;
+                /*
+                display(0, 2, MediaStateStatus, Flcd);
+                display(1, 0, " " + (showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : " "), Flcd);
+                display(1, 3, "      " + mp3Player.getCurrentVolume() + "%", Flcd);
+                display(2, 0, scrollingText(mp3Player.getCurrentTitle()), Flcd);
+                */
+                 display(0, 0, showTimeEscaped ? (toLeadingZeroNumber(minute) + ":" + toLeadingZeroNumber(second)) : "     ", lcd);
+            //} catch (InterruptedException e) {
              //Ignore sleep nterruption
-            }
+            //}
         }
     }
 
     private String scrollingText(String track_){
         String LCDTrack = "";
+        if(track_ !=null){
+            if(track_.length() > 16) {
+                if (LCDTrackPos + 16 <= track_.length() - 1) {
+                    LCDTrack = track_.substring(LCDTrackPos, LCDTrackPos + 16);
+                } else if (LCDTrackPos <= track_.length()) {
 
-        if(track_.length() > 16){
-            if (LCDTrackPos + 16 <= track_.length()-1){
-                LCDTrack = track_.substring(LCDTrackPos,LCDTrackPos+16);
-            }else if(LCDTrackPos  <= track_.length()){
+                    int firstCount = (track_.length()) - LCDTrackPos;
 
-                int firstCount = (track_.length()) - LCDTrackPos;
+                    int nextCount = 0;
+                    if (firstCount > 14) {
+                        nextCount = firstCount - 14;
+                    } else {
+                        nextCount = 14 - firstCount;
+                    }
 
-                int nextCount = 0;
-                if(firstCount > 14){
-                    nextCount = firstCount - 14;
-                }else
-                {
-                    nextCount = 14 - firstCount;
+                    //Log.i(TAG,"LCDTrackPos: "+ LCDTrackPos +" tl: "+track_.length()+" nextCount: "+nextCount+", firstCount: "+firstCount);
+
+                    LCDTrack = track_.substring(LCDTrackPos, LCDTrackPos + firstCount);
+                    LCDTrack += "  " + track_.substring(0, nextCount);
+                } else {
+                    LCDTrackPos = 0;
                 }
-
-                Log.i(TAG,"LCDTrackPos: "+ LCDTrackPos +" tl: "+track_.length()+" nextCount: "+nextCount+", firstCount: "+firstCount);
-
-                LCDTrack = track_.substring(LCDTrackPos,LCDTrackPos+firstCount);
-                LCDTrack += "  " + track_.substring(0,nextCount);
-            }else {
-                LCDTrackPos =0;
+                LCDTrackPos = LCDTrackPos + 2;
             }
-            LCDTrackPos = LCDTrackPos+2;
         }
         return  LCDTrack;
     }
@@ -186,7 +189,7 @@ public class LcdDisplayManager implements Runnable,
     public void onBrightnessChanged(int brightness) {
         if (0 <= brightness && brightness <= 100) {
             int c = brightness * 255 / 100;
-            //lcd.setRGB(c, c, c);
+            lcd.setRGB(c, c, c);
         }
     }
 
